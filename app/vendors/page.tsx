@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getVendors, upsertVendor, updateVendor, deleteVendor } from '@/lib/supabase'
@@ -22,7 +22,7 @@ const STATUSES: { value: VendorStatus; label: string; color: string }[] = [
 
 const statusInfo = (s: VendorStatus) => STATUSES.find((x) => x.value === s) ?? STATUSES[0]
 
-export default function VendorsPage() {
+function VendorsContent() {
   const params = useSearchParams()
   const router = useRouter()
   const id = params.get('id')
@@ -226,7 +226,7 @@ export default function VendorsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Pangalan ng Vendor *</label>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Vendor Name *</label>
                 <input type="text" className="input-field" placeholder="e.g. Juan Photography Studio" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -270,5 +270,13 @@ export default function VendorsPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function VendorsPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-4xl animate-bounce">🤝</div></main>}>
+      <VendorsContent />
+    </Suspense>
   )
 }

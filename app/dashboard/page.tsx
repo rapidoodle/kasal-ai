@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getWedding } from '@/lib/supabase'
@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   { href: 'vendors', label: 'Vendors', emoji: '🤝' },
 ]
 
-export default function DashboardPage() {
+function DashboardContent() {
   const params = useSearchParams()
   const router = useRouter()
   const id = params.get('id')
@@ -209,5 +209,13 @@ export default function DashboardPage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gradient-wedding flex items-center justify-center"><div className="text-4xl animate-bounce">💍</div></main>}>
+      <DashboardContent />
+    </Suspense>
   )
 }

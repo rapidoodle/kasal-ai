@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getWedding, updateChecklist } from '@/lib/supabase'
@@ -11,7 +11,7 @@ const PHASES: ChecklistPhase[] = [
   '1-3 months', '2-4 weeks', '1 week', 'day of',
 ]
 
-export default function ChecklistPage() {
+function ChecklistContent() {
   const params = useSearchParams()
   const router = useRouter()
   const id = params.get('id')
@@ -255,5 +255,13 @@ export default function ChecklistPage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function ChecklistPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-4xl animate-bounce">✅</div></main>}>
+      <ChecklistContent />
+    </Suspense>
   )
 }

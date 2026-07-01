@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getWedding, getBudgetItems, upsertBudgetItem, updateBudgetItem, deleteBudgetItem } from '@/lib/supabase'
@@ -19,7 +19,7 @@ type BudgetBreakdown = {
   notes: string
 }
 
-export default function BudgetPage() {
+function BudgetContent() {
   const params = useSearchParams()
   const router = useRouter()
   const id = params.get('id')
@@ -297,5 +297,13 @@ export default function BudgetPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function BudgetPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-4xl animate-bounce">💰</div></main>}>
+      <BudgetContent />
+    </Suspense>
   )
 }

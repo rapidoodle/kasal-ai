@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getWedding, getBudgetItems, upsertBudgetItem, updateBudgetItem, deleteBudgetItem } from '@/lib/supabase'
-import type { BudgetItem, Wedding } from '@/lib/types'
+import { getEvent, getBudgetItems, upsertBudgetItem, updateBudgetItem, deleteBudgetItem } from '@/lib/supabase'
+import type { BudgetItem, Event } from '@/lib/types'
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   'Venue', 'Catering', 'Photo/Video', 'Florals', 'Styling & HMUA',
   'Entertainment', 'Cake', 'Invitations', 'Transportation', 'Attire',
-  'Rings', 'Honeymoon', 'Miscellaneous',
+  'Decorations', 'Giveaways', 'Miscellaneous',
 ]
 
 type BudgetBreakdown = {
@@ -24,39 +24,54 @@ function BudgetContent() {
   const router = useRouter()
   const id = params.get('id')
 
-  const [wedding, setWedding] = useState<Wedding | null>(null)
+  const [event, setEvent] = useState<Event | null>(null)
   const [items, setItems] = useState<BudgetItem[]>([])
   const [generating, setGenerating] = useState(false)
   const [aiBreakdown, setAiBreakdown] = useState<BudgetBreakdown[] | null>(null)
   const [aiTips, setAiTips] = useState<string[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({ category: CATEGORIES[0], label: '', estimated: 0, actual: 0, paid: false })
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
+  const [form, setForm] = useState({ category: DEFAULT_CATEGORIES[0], label: '', estimated: 0, actual: 0, paid: false })
 
   const load = useCallback(async () => {
     if (!id) return router.push('/')
-    const [w, i] = await Promise.all([getWedding(id), getBudgetItems(id)])
+    const [w, i] = await Promise.all([getEvent(id), getBudgetItems(id)])
     if (!w) return router.push('/')
-    setWedding(w)
+    setEvent(w)
     setItems(i)
+    // Set categories based on event type
+    if (w.details?.event_type) {
+      const catMap: Record<string, string[]> = {
+        wedding: ['Venue', 'Catering', 'Photo/Video', 'Florals', 'Styling & HMUA', 'Entertainment', 'Cake', 'Invitations', 'Transportation', 'Attire', 'Rings', 'Honeymoon', 'Miscellaneous'],
+        birthday: ['Venue', 'Catering', 'Cake', 'Decorations', 'Entertainment', 'Photography', 'Invitations', 'Attire', 'Miscellaneous'],
+        debut: ['Venue', 'Catering', 'Gown/Styling', 'Photography/Video', 'Cotillion', 'Cake', 'Decorations', 'Flowers', 'Invitations', 'Entertainment', 'Miscellaneous'],
+        christening: ['Venue', 'Catering', 'Church', 'Gown/Outfit', 'Photography', 'Cake', 'Decorations', 'Giveaways', 'Miscellaneous'],
+        corporate: ['Venue', 'Catering', 'AV/Tech', 'Decorations', 'Entertainment', 'Marketing/Print', 'Transportation', 'Accommodation', 'Miscellaneous'],
+        reunion: ['Venue', 'Food', 'Activities', 'Decorations', 'Photography', 'Invitations/Comms', 'Miscellaneous'],
+      }
+      const eventCats = catMap[w.details.event_type] ?? DEFAULT_CATEGORIES
+      setCategories(eventCats)
+      setForm((f) => ({ ...f, category: eventCats[0] }))
+    }
   }, [id, router])
 
   useEffect(() => { load() }, [load])
 
-  const totalBudget = wedding?.details?.budget ?? 0
+  const totalBudget = event?.details?.budget ?? 0
   const totalEstimated = items.reduce((s, i) => s + i.estimated, 0)
   const totalActual = items.reduce((s, i) => s + i.actual, 0)
   const totalPaid = items.filter((i) => i.paid).reduce((s, i) => s + i.actual, 0)
   const remaining = totalBudget - totalEstimated
 
   const generateAI = async () => {
-    if (!wedding) return
+    if (!event) return
     setGenerating(true)
     try {
       const res = await fetch('/api/generate-budget', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wedding.details),
+        body: JSON.stringify(event.details),
       })
       const data = await res.json()
       if (data.breakdown) {
@@ -74,7 +89,7 @@ function BudgetContent() {
     if (!aiBreakdown || !id) return
     for (const b of aiBreakdown) {
       await upsertBudgetItem({
-        wedding_id: id,
+        event_id: id,
         category: b.category,
         label: b.category,
         estimated: b.estimated,
@@ -92,10 +107,10 @@ function BudgetContent() {
       await updateBudgetItem(editingId, form)
       setItems((prev) => prev.map((i) => i.id === editingId ? { ...i, ...form } : i))
     } else {
-      const newItem = await upsertBudgetItem({ wedding_id: id, ...form })
+      const newItem = await upsertBudgetItem({ event_id: id, ...form })
       if (newItem) setItems((prev) => [...prev, newItem])
     }
-    setForm({ category: CATEGORIES[0], label: '', estimated: 0, actual: 0, paid: false })
+    setForm({ category: categories[0], label: '', estimated: 0, actual: 0, paid: false })
     setShowAdd(false)
     setEditingId(null)
   }
@@ -112,11 +127,21 @@ function BudgetContent() {
 
   const fmt = (n: number) => `₱${n.toLocaleString()}`
 
-  const grouped = CATEGORIES.reduce<Record<string, BudgetItem[]>>((acc, cat) => {
+  // Use dynamic categories for grouping
+  const grouped = categories.reduce<Record<string, BudgetItem[]>>((acc, cat) => {
     const catItems = items.filter((i) => i.category === cat)
     if (catItems.length) acc[cat] = catItems
     return acc
   }, {})
+
+  // Also add any items with categories not in the list
+  items.forEach((item) => {
+    if (!grouped[item.category]) {
+      grouped[item.category] = [item]
+    } else if (!grouped[item.category].find((i) => i.id === item.id)) {
+      grouped[item.category].push(item)
+    }
+  })
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -166,7 +191,7 @@ function BudgetContent() {
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${totalEstimated > totalBudget ? 'bg-red-500' : 'bg-gradient-to-r from-rose-500 to-pink-500'}`}
+                className={`h-full rounded-full transition-all ${totalEstimated > totalBudget ? 'bg-red-500' : 'bg-gradient-to-r from-teal-500 to-teal-400'}`}
                 style={{ width: `${Math.min(100, (totalEstimated / totalBudget) * 100)}%` }}
               />
             </div>
@@ -175,10 +200,10 @@ function BudgetContent() {
 
         {/* AI Breakdown suggestion */}
         {!aiBreakdown && items.length === 0 && (
-          <div className="card p-5 bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200 text-center">
+          <div className="card p-5 bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 text-center">
             <div className="text-2xl mb-2">✨</div>
             <div className="font-bold text-gray-900 mb-1">Not sure how to split your budget?</div>
-            <p className="text-sm text-gray-500 mb-3">Let AI suggest a realistic breakdown based on your total, location, and guest count.</p>
+            <p className="text-sm text-gray-500 mb-3">Let AI suggest a realistic breakdown based on your event type, total, location, and guest count.</p>
             <button onClick={generateAI} disabled={generating} className="btn-primary text-sm">
               {generating ? 'Crunching numbers...' : 'Generate AI Budget Plan'}
             </button>
@@ -267,7 +292,7 @@ function BudgetContent() {
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1 block">Kategorya</label>
                 <select className="input-field" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div>
@@ -285,7 +310,7 @@ function BudgetContent() {
                 </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.paid} onChange={(e) => setForm((f) => ({ ...f, paid: e.target.checked }))} className="accent-rose-500 w-4 h-4" />
+                <input type="checkbox" checked={form.paid} onChange={(e) => setForm((f) => ({ ...f, paid: e.target.checked }))} className="accent-teal-500 w-4 h-4" />
                 <span className="text-sm text-gray-600">Already paid</span>
               </label>
             </div>

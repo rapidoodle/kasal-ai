@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getWedding, updateChecklist } from '@/lib/supabase'
-import type { ChecklistItem, ChecklistPhase, Wedding } from '@/lib/types'
+import { getEvent, updateChecklist } from '@/lib/supabase'
+import type { ChecklistItem, ChecklistPhase, Event } from '@/lib/types'
 
 const PHASES: ChecklistPhase[] = [
   '12+ months', '9-12 months', '6-9 months', '3-6 months',
@@ -16,7 +16,7 @@ function ChecklistContent() {
   const router = useRouter()
   const id = params.get('id')
 
-  const [wedding, setWedding] = useState<Wedding | null>(null)
+  const [event, setEvent] = useState<Event | null>(null)
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -26,22 +26,22 @@ function ChecklistContent() {
 
   const load = useCallback(async () => {
     if (!id) return router.push('/')
-    const data = await getWedding(id)
+    const data = await getEvent(id)
     if (!data) return router.push('/')
-    setWedding(data)
+    setEvent(data)
     setChecklist(data.checklist ?? [])
   }, [id, router])
 
   useEffect(() => { load() }, [load])
 
   const generate = async () => {
-    if (!wedding) return
+    if (!event) return
     setGenerating(true)
     try {
       const res = await fetch('/api/generate-checklist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wedding.details),
+        body: JSON.stringify(event.details),
       })
       const data = await res.json()
       if (data.checklist) {
@@ -109,16 +109,16 @@ function ChecklistContent() {
             </svg>
           </Link>
           <div className="flex-1">
-            <div className="font-bold text-gray-900">Wedding Checklist ✅</div>
+            <div className="font-bold text-gray-900">Event Checklist ✅</div>
             {totalCount > 0 && (
               <div className="text-xs text-gray-400">{completedCount}/{totalCount} done · {progress}%</div>
             )}
           </div>
-          {saving && <div className="text-xs text-rose-400">Saving...</div>}
+          {saving && <div className="text-xs text-teal-400">Saving...</div>}
         </div>
         {totalCount > 0 && (
           <div className="h-1 bg-gray-100">
-            <div className="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-gradient-to-r from-teal-500 to-teal-400 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
         )}
       </header>
@@ -126,11 +126,11 @@ function ChecklistContent() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Empty state */}
         {totalCount === 0 && !generating && (
-          <div className="card p-8 text-center bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200">
+          <div className="card p-8 text-center bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
             <div className="text-5xl mb-4">✨</div>
             <div className="font-serif text-2xl text-gray-900 mb-2">Generate Your Checklist</div>
             <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              Your AI-built checklist — personalized to your date, budget, and setup. Filipino wedding essentials included.
+              Your AI-built checklist — personalized to your event type, date, budget, and setup. Filipino celebration essentials included.
             </p>
             <button onClick={generate} className="btn-primary">
               Generate AI Checklist
@@ -146,7 +146,7 @@ function ChecklistContent() {
             <p className="text-gray-500 text-sm">Hang tight. We&apos;re figuring out everything you need to do.</p>
             <div className="flex justify-center gap-1 mt-4">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                <div key={i} className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           </div>
@@ -157,7 +157,7 @@ function ChecklistContent() {
           <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
             <button
               onClick={() => setActivePhase(null)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activePhase === null ? 'bg-rose-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activePhase === null ? 'bg-teal-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
             >
               All
             </button>
@@ -165,7 +165,7 @@ function ChecklistContent() {
               <button
                 key={p}
                 onClick={() => setActivePhase(p === activePhase ? null : p)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activePhase === p ? 'bg-rose-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activePhase === p ? 'bg-teal-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
               >
                 {p}
               </button>
@@ -180,7 +180,7 @@ function ChecklistContent() {
             <div key={phase} className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">{phase}</h3>
-                <span className="text-xs text-rose-400 font-semibold">
+                <span className="text-xs text-teal-400 font-semibold">
                   {items.filter((i) => i.completed).length}/{items.length}
                 </span>
               </div>
@@ -189,7 +189,7 @@ function ChecklistContent() {
                   <div key={item.id} className="flex items-start gap-3 p-4 group">
                     <button
                       onClick={() => toggleItem(item.id)}
-                      className={`w-5 h-5 mt-0.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${item.completed ? 'bg-rose-500 border-rose-500' : 'border-gray-200 hover:border-rose-300'}`}
+                      className={`w-5 h-5 mt-0.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${item.completed ? 'bg-teal-500 border-teal-500' : 'border-gray-200 hover:border-teal-300'}`}
                     >
                       {item.completed && (
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +225,7 @@ function ChecklistContent() {
                       autoFocus
                       type="text"
                       placeholder="Add a task..."
-                      className="flex-1 text-sm px-3 py-2 border border-rose-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-200"
+                      className="flex-1 text-sm px-3 py-2 border border-teal-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-100"
                       value={newTask}
                       onChange={(e) => setNewTask(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addCustom(phase as ChecklistPhase)}
@@ -236,7 +236,7 @@ function ChecklistContent() {
                 ) : (
                   <button
                     onClick={() => setAddingPhase(phase as ChecklistPhase)}
-                    className="w-full text-left text-xs text-gray-400 hover:text-rose-500 px-4 py-2.5 transition-colors"
+                    className="w-full text-left text-xs text-gray-400 hover:text-teal-500 px-4 py-2.5 transition-colors"
                   >
                     + Add a custom task
                   </button>
@@ -248,7 +248,7 @@ function ChecklistContent() {
         {/* Regenerate button */}
         {totalCount > 0 && (
           <div className="text-center pt-2 pb-8">
-            <button onClick={generate} disabled={generating} className="text-sm text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-50">
+            <button onClick={generate} disabled={generating} className="text-sm text-gray-400 hover:text-teal-500 transition-colors disabled:opacity-50">
               ✨ Regenerate checklist
             </button>
           </div>

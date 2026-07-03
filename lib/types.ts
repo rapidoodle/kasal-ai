@@ -1,27 +1,39 @@
-export type WeddingType = 'church' | 'civil' | 'beach' | 'garden' | 'destination'
-export type WeddingTheme = 'classic' | 'bohemian' | 'modern' | 'rustic' | 'fairytale' | 'garden' | 'beach' | 'vintage' | 'glamorous'
+export type EventType = 'wedding' | 'birthday' | 'debut' | 'christening' | 'corporate' | 'reunion'
 
-export interface WeddingDetails {
-  partner1_name: string
-  partner2_name: string
-  wedding_date: string   // ISO date string
-  venue_name?: string
-  wedding_type: WeddingType
-  theme: WeddingTheme
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  wedding: 'Wedding',
+  birthday: 'Birthday',
+  debut: 'Debut',
+  christening: 'Christening / Baptism',
+  corporate: 'Corporate Event',
+  reunion: 'Reunion / Party',
+}
+
+export const EVENT_TYPE_EMOJIS: Record<EventType, string> = {
+  wedding: '💍',
+  birthday: '🎂',
+  debut: '👗',
+  christening: '🙏',
+  corporate: '💼',
+  reunion: '🎉',
+}
+
+export interface EventDetails {
+  event_name: string
+  organizer_name: string
+  partner_name?: string      // for weddings only
+  event_date: string
+  event_type: EventType
+  theme?: string
   guest_count: number
-  budget: number         // total budget in PHP
+  budget: number
   city: string
+  venue_name?: string
 }
 
 export type ChecklistPhase =
-  | '12+ months'
-  | '9-12 months'
-  | '6-9 months'
-  | '3-6 months'
-  | '1-3 months'
-  | '2-4 weeks'
-  | '1 week'
-  | 'day of'
+  | '12+ months' | '9-12 months' | '6-9 months' | '3-6 months'
+  | '1-3 months' | '2-4 weeks' | '1 week' | 'day of'
 
 export interface ChecklistItem {
   id: string
@@ -38,7 +50,7 @@ export type VendorCategory = string
 
 export interface Vendor {
   id: string
-  wedding_id: string
+  event_id: string
   category: VendorCategory
   name: string
   contact_name?: string
@@ -53,7 +65,7 @@ export type BudgetCategory = string
 
 export interface BudgetItem {
   id: string
-  wedding_id: string
+  event_id: string
   category: BudgetCategory
   label: string
   estimated: number
@@ -62,10 +74,10 @@ export interface BudgetItem {
   created_at: string
 }
 
-export interface Wedding {
+export interface Event {
   id: string
   user_id?: string | null
-  details: WeddingDetails
+  details: EventDetails
   checklist: ChecklistItem[]
   created_at: string
   updated_at: string

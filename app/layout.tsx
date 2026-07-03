@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Kasal.ai — Your AI-Powered Filipino Wedding Planner',
-  description: 'Plan your perfect Filipino wedding with AI. Personalized checklists, budget tracker, vendor list, and countdown — lahat para sa inyong espesyal na araw.',
+  title: 'Ganap PH — Plan Any Filipino Celebration, Powered by AI',
+  description: 'Plan your perfect Filipino celebration with AI. Personalized checklists, budget tracker, vendor list, and countdown — para sa lahat ng okasyon.',
   openGraph: {
-    title: 'Kasal.ai — Your AI-Powered Filipino Wedding Planner',
-    description: 'Plan your perfect Filipino wedding with AI.',
+    title: 'Ganap PH — Plan Any Filipino Celebration, Powered by AI',
+    description: 'Plan your perfect Filipino celebration with AI. Personalized checklists, budget tracker, vendor list, and countdown — para sa lahat ng okasyon.',
     type: 'website',
   },
 }

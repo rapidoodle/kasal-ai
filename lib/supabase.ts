@@ -1,47 +1,40 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Wedding, Vendor, BudgetItem, ChecklistItem } from './types'
+import type { Event, Vendor, BudgetItem, ChecklistItem } from './types'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// ── Weddings ──────────────────────────────────────────────
-export async function saveWedding(wedding: Omit<Wedding, 'id' | 'created_at' | 'updated_at'>): Promise<Wedding | null> {
+export async function saveEvent(event: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event | null> {
   const { data: { session } } = await supabase.auth.getSession()
-  const payload = { ...wedding, user_id: session?.user?.id ?? null }
-  const { data, error } = await supabase.from('weddings').insert(payload).select().single()
+  const payload = { ...event, user_id: session?.user?.id ?? null }
+  const { data, error } = await supabase.from('events').insert(payload).select().single()
   if (error) { console.error(error); return null }
   return data
 }
 
-export async function getWeddingByUser(userId: string): Promise<Wedding | null> {
+export async function getEventByUser(userId: string): Promise<Event | null> {
   const { data, error } = await supabase
-    .from('weddings')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+    .from('events').select('*').eq('user_id', userId)
+    .order('created_at', { ascending: false }).limit(1).single()
   if (error) { return null }
   return data
 }
 
-export async function getWedding(id: string): Promise<Wedding | null> {
-  const { data, error } = await supabase.from('weddings').select('*').eq('id', id).single()
+export async function getEvent(id: string): Promise<Event | null> {
+  const { data, error } = await supabase.from('events').select('*').eq('id', id).single()
   if (error) { console.error(error); return null }
   return data
 }
 
-export async function updateChecklist(weddingId: string, checklist: ChecklistItem[]): Promise<boolean> {
-  const { error } = await supabase.from('weddings').update({ checklist, updated_at: new Date().toISOString() }).eq('id', weddingId)
+export async function updateChecklist(eventId: string, checklist: ChecklistItem[]): Promise<boolean> {
+  const { error } = await supabase.from('events').update({ checklist, updated_at: new Date().toISOString() }).eq('id', eventId)
   if (error) { console.error(error); return false }
   return true
 }
 
-// ── Vendors ───────────────────────────────────────────────
-export async function getVendors(weddingId: string): Promise<Vendor[]> {
-  const { data, error } = await supabase.from('vendors').select('*').eq('wedding_id', weddingId).order('category')
+export async function getVendors(eventId: string): Promise<Vendor[]> {
+  const { data, error } = await supabase.from('vendors').select('*').eq('event_id', eventId).order('category')
   if (error) { console.error(error); return [] }
   return data
 }
@@ -64,9 +57,8 @@ export async function deleteVendor(id: string): Promise<boolean> {
   return true
 }
 
-// ── Budget ────────────────────────────────────────────────
-export async function getBudgetItems(weddingId: string): Promise<BudgetItem[]> {
-  const { data, error } = await supabase.from('budget_items').select('*').eq('wedding_id', weddingId).order('category')
+export async function getBudgetItems(eventId: string): Promise<BudgetItem[]> {
+  const { data, error } = await supabase.from('budget_items').select('*').eq('event_id', eventId).order('category')
   if (error) { console.error(error); return [] }
   return data
 }

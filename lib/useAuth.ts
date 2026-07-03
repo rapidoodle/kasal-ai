@@ -23,7 +23,7 @@ export function useAuth() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    localStorage.removeItem('kasal_wedding_id')
+    localStorage.removeItem('ganap_event_id')
   }
 
   return { user, loading, signOut }

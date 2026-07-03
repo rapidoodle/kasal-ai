@@ -56,7 +56,7 @@ function VendorsContent() {
       await updateVendor(editingId, form)
       setVendors((prev) => prev.map((v) => v.id === editingId ? { ...v, ...form } : v))
     } else {
-      const newVendor = await upsertVendor({ wedding_id: id, ...form })
+      const newVendor = await upsertVendor({ event_id: id, ...form })
       if (newVendor) setVendors((prev) => [...prev, newVendor])
     }
     setForm({ category: CATEGORIES[0], name: '', contact_name: '', contact_number: '', price: 0, status: 'researching', notes: '' })
@@ -113,7 +113,7 @@ function VendorsContent() {
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               <button
                 onClick={() => setFilterCat('all')}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${filterCat === 'all' ? 'bg-rose-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${filterCat === 'all' ? 'bg-teal-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
               >
                 All
               </button>
@@ -121,7 +121,7 @@ function VendorsContent() {
                 <button
                   key={c}
                   onClick={() => setFilterCat(c === filterCat ? 'all' : c)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${filterCat === c ? 'bg-rose-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${filterCat === c ? 'bg-teal-500 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
                 >
                   {c}
                 </button>
@@ -149,7 +149,7 @@ function VendorsContent() {
 
         {/* Empty state */}
         {vendors.length === 0 && (
-          <div className="card p-8 text-center bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200">
+          <div className="card p-8 text-center bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
             <div className="text-4xl mb-3">🤝</div>
             <div className="font-serif text-xl text-gray-900 mb-1">No vendors yet</div>
             <p className="text-sm text-gray-500 mb-5">Add your suppliers here so you can track who you&apos;ve contacted, who you booked, and what everything costs.</p>
@@ -170,7 +170,7 @@ function VendorsContent() {
                   <div className="text-sm text-gray-500 mt-1">{vendor.contact_name}</div>
                 )}
                 {vendor.contact_number && (
-                  <a href={`tel:${vendor.contact_number}`} className="text-sm text-rose-500 font-medium">
+                  <a href={`tel:${vendor.contact_number}`} className="text-sm text-teal-500 font-medium">
                     {vendor.contact_number}
                   </a>
                 )}
@@ -250,7 +250,7 @@ function VendorsContent() {
                     <button
                       key={s.value}
                       onClick={() => setForm((f) => ({ ...f, status: s.value }))}
-                      className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-all border-2 ${form.status === s.value ? 'border-rose-500 ' + s.color : 'border-transparent ' + s.color}`}
+                      className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-all border-2 ${form.status === s.value ? 'border-teal-500 ' + s.color : 'border-transparent ' + s.color}`}
                     >
                       {s.label}
                     </button>
